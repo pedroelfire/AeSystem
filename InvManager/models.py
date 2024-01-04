@@ -14,3 +14,29 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
+    
+class Movement(models.Model):
+    MOVEMENT_CHOICES = [
+        ('IN', 'Entrada'),
+        ('OUT', 'Salida'),
+    ]
+
+    movement_id = models.AutoField(primary_key=True)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    movement_type = models.CharField(max_length=3, choices=MOVEMENT_CHOICES)
+    quantity = models.IntegerField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        # Update product stock based on movement type
+        if self.movement_type == 'IN':
+            self.product.stock += self.quantity
+        elif self.movement_type == 'OUT':
+            self.product.stock -= self.quantity
+
+        # Save the movement and update the product stock
+        super().save(*args, **kwargs)
+        self.product.save()
+
+    def __str__(self):
+        return f"{self.movement_type} - {self.product.name} - {self.quantity}"
